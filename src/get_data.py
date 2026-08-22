@@ -9,7 +9,7 @@ def get_board(driver):
     return board_state
 
 
-def read_bot_game(driver):
+def get_game_data(driver):
 
     return driver.execute_script("""
         if (typeof globalThis.__r !== "function") {
@@ -19,43 +19,90 @@ def read_bot_game(driver):
             };
         }
 
-        function looksLikeStore(store) {
-            return store && typeof store.getState === "function";
-        }
-
-        function storeFromModule(module) {
-            if (!module) return null;
-            for (const key of ["defaultGameStore", "useGameStore"]) {
-                if (typeof module[key] === "object" && looksLikeStore(module[key])) {
-                    return module[key];
-                }
+        function findModule(predicate, knownIds) {
+            for (const id of knownIds) {
+                try {
+                    const m = globalThis.__r(id);
+                    if (m && predicate(m)) return m;
+                } catch (_) { /* unknown module */ }
+            }
+            for (let id = 300; id <= 8000; id++) {
+                try {
+                    const m = globalThis.__r(id);
+                    if (m && predicate(m)) return m;
+                } catch (_) { /* unknown module */ }
             }
             return null;
         }
 
-        let store = null;
-
-        const knownIds = [1570, 1626];
-        for (const id of knownIds) {
-            try {
-                store = storeFromModule(globalThis.__r(id));
-                if (store) break;
-            } catch (_) { /* unknown module */ }
+        function looksLikeStore(s) {
+            return s && typeof s.getState === "function";
         }
 
-        if (!store) {
-            for (let id = 300; id <= 8000; id++) {
-                try {
-                    store = storeFromModule(globalThis.__r(id));
-                    if (store) break;
-                } catch (_) { /* unknown module */ }
+        const sessionManager = findModule(
+            (m) =>
+                typeof m.getSession === "function" &&
+                typeof m.useSessionRegistry === "function" &&
+                typeof m.getOrCreateSession === "function",
+            [2033]
+        );
+
+        const gameStoreModule = findModule(
+            (m) => looksLikeStore(m.defaultGameStore) || looksLikeStore(m.useGameStore),
+            [1570]
+        );
+
+        let store = null;
+        let sessionKey = null;
+        let registryKeys = [];
+
+        if (sessionManager) {
+            const registry = sessionManager.useSessionRegistry;
+            const sessions = registry.getState().sessions || {};
+            registryKeys = Object.keys(sessions);
+
+            let bestScore = -1;
+            for (const key of registryKeys) {
+                const s = sessions[key];
+                if (!s || s.retired) continue;
+
+                let score = 0;
+                if (s.isConnected) score += 100;
+                if (s.status === "active") score += 50;
+                if (s.format === "bots") score += 10;
+                if (s.isSeated) score += 20;
+
+                const session = sessionManager.getSession(key);
+                const hasSnapshot = Boolean(
+                    session &&
+                    session.store &&
+                    session.store.getState &&
+                    session.store.getState().snapshot
+                );
+                if (hasSnapshot) score += 1000;
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    sessionKey = key;
+                }
+            }
+
+            if (sessionKey) {
+                const session = sessionManager.getSession(sessionKey);
+                store = session && session.store;
             }
         }
 
-        if (!store) {
+        if (!looksLikeStore(store) && gameStoreModule) {
+            store = gameStoreModule.defaultGameStore || gameStoreModule.useGameStore;
+        }
+
+        if (!looksLikeStore(store)) {
             return {
                 ready: false,
-                error: "game store unavailable (no defaultGameStore/useGameStore module found)"
+                error: "active game store unavailable",
+                sessionKey,
+                registryKeys
             };
         }
 
@@ -68,6 +115,7 @@ def read_bot_game(driver):
                 Array.isArray(snapshot.seats)
             ),
 
+            sessionKey: sessionKey ?? null,
             activeConnectionId: state.activeConnectionId ?? null,
             isConnected: state.isConnected ?? false,
             handId: state.handId ?? snapshot?.handId ?? null,

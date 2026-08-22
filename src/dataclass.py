@@ -5,16 +5,25 @@ from random import choice
 @dataclass
 class Player:
     name: str = ""
-    balance: int = 0
-    init_balance: int = 200
-    bet: int = 0
-    is_dealer: bool = False
-    is_fold: bool = False
-    rating: int = 0
-    pos: list = field(default_factory=list)
+    stack: int = 0
+    seat: int = 0
     is_me: bool = False
+    is_Dealer: bool = False
+    is_SB: bool = False
+    is_BB: bool = False
+    is_Bot: bool = False
+    rating: int = 0
+    is_fold: bool = False
+    is_Turn: bool = False
+    bet: int = 0
     hand: list = field(default_factory=list)
-
+    allIn: int = None
+    maxTo: int = None
+    minTo: int = None
+    call: int = None
+    can_check: bool = None
+    can_call: bool = None
+    can_fold: bool = None
 
 @dataclass
 class Board:
@@ -103,5 +112,39 @@ class Board:
             None,
         )
         return dealer
-        
+def card_correct(wrong):
+    for card in wrong:
+        suit2num={"J":11,"Q":12,"K":13,"A":1}
+        return [suit2num.get(card[0],card[0]),card[1]]
+    
+    
+def data2board(data):
+    board=Board()
+    for player in data["players"]:
+        pl=Player(name=player["name"],
+                  stack=player["stack"],
+                  seat=player["seat"],
+                  is_me=(player["cards"] != None),
+                  is_Dealer=player["isDealer"],
+                  is_SB=player["isSB"],
+                  is_BB=player["isBB"],
+                  is_Bot=player["isBot"],
+                  rating=player["rating"],
+                  is_fold=(player["status"] == "folded"),
+                  is_Turn=player["isTurn"],
+                  bet=player["bet"],
+                  )
+        if pl.is_me:
+            pl.hand=card_correct(player["cards"])
+            pl.allIn=data["allowed"]["allIn"]
+            pl.maxTo=data["maxTo"]
+            pl.minTo=data["minTo"]
+            pl.call=data["call"]
+            pl.can_check=data["check"]
+            pl.can_call=data["call"]
+            pl.can_fold=data["fold"]
+                
+        board.players.append()
+    board.public_cards=card_correct(data["board"])
+    board.pot=data["pot"]
 
