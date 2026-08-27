@@ -1,10 +1,16 @@
 from selenium import webdriver
-
+import os
+from time import sleep
 def init_driver():
     options= webdriver.ChromeOptions()
     options.debugger_address="127.0.0.1:9222"
     print("connecting")
-    driver = webdriver.Chrome(options=options)
+    try:
+        driver = webdriver.Chrome(options=options)
+    except:
+        os.system('"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --remote-debugging-port=9222 --user-data-dir="$HOME/chrome-selenium"')
+        sleep(2)
+        driver = webdriver.Chrome(options=options)
     print("created")
     setup_network_interceptor(driver)
     return driver

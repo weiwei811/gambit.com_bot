@@ -1,7 +1,9 @@
 from src.setup_driver import init_driver
 from src.enter import reset,login,enter_game
 from src.get_data import get_game_data
-
+from src.dataclass import data2board
+from src.play import decision
+from src.play import exec_deci
 def main():
     driver=init_driver()
     reset(driver)
@@ -10,7 +12,7 @@ def main():
     while True:
         data=get_game_data(driver)
         board=data2board(data)
-        decision=decide(board)
+        decision=decision(board,decision)
         exec_decision(decision)
 
     input()

@@ -6,9 +6,11 @@ from itertools import combinations
 # heart
 # clubs
 
-def clasify_5(cards):
+def classify_5(cards):
+    # print(cards)
     card_suits = [card[1] for card in cards]
     card_nums = [card[0] for card in cards]
+
 
     # 數字排序
     card_nums_sorted = sorted(card_nums)
@@ -28,16 +30,16 @@ def clasify_5(cards):
                 is_straight = True
 
     if is_royalflush :
-        return  10
+        return  10,1
     elif is_flush and is_straight:
         return 9,max(card_nums)
     elif 4 in num_counts.values():
-        for num,count in num_counts.item:
+        for num,count in num_counts.items():
             if count==4:
                 four=num
         return 8,four
     elif 3 in num_counts.values() and 2 in num_counts.values():
-        for num,count in num_counts.item:
+        for num,count in num_counts.items():
             if count==3:
                 three=num
         return 7,three
@@ -49,13 +51,13 @@ def clasify_5(cards):
         else:
             return 5,max(card_nums)
     elif 3 in num_counts.values():
-        for num,count in num_counts.item:
+        for num,count in num_counts.items():
             if count==3:
                 three=num
         return 4,three
     elif list(num_counts.values()).count(2) == 2:
         two=[]
-        for num,count in num_counts.item:
+        for num,count in num_counts.items():
             if count==2:
                 two.append(num)
         if 1 in two:
@@ -63,21 +65,22 @@ def clasify_5(cards):
         else:
             return 3,max(two)
     elif 2 in num_counts.values():
-        for num,count in num_counts.item:
+        for num,count in num_counts.items():
             if count==2:
                 two=num
         return 2,two
-    if 1 in set(num):
+    if 1 in set(card_nums):
         return 1,1
     else:
-        return 1,max(num)
+        return 1,max(card_nums)
 
 def classify_hand(cards7):
     maxcombo=0
+    print(cards7)
     for cards in combinations(cards7,5):
-        combo_type=clasify_5(cards)
+        combo_type,bigcard=classify_5(cards)
         if maxcombo<combo_type:
             maxcombo=combo_type
-    return maxcombo
+            maxcard=bigcard
+    return maxcombo,maxcard
 
-    

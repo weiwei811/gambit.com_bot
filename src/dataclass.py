@@ -24,6 +24,9 @@ class Player:
     can_check: bool = None
     can_call: bool = None
     can_fold: bool = None
+    def __repl__(self):
+        s=f"{self.name},{self.stack},{self.seat},{self.hand}"
+        return s
 
 @dataclass
 class Board:
@@ -60,7 +63,12 @@ class Board:
             return None
 
         return choice(list(remaining))
-
+    def remain_player_count(self):
+        alive=0
+        for player in self.players:
+            if not player.is_fold:
+                alive+=1
+        return alive
     def winner(self):
         # 每個仍參與牌局的玩家必須有兩張牌
         for player in self.players:
@@ -112,10 +120,15 @@ class Board:
             None,
         )
         return dealer
+    def __repl__(self):
+        s=f"{self.players},{self.public_cards},{self.pot}"
+        return s
 def card_correct(wrong):
+    cards=[]
     for card in wrong:
         suit2num={"J":11,"Q":12,"K":13,"A":1}
-        return [suit2num.get(card[0],card[0]),card[1]]
+        cards.append((suit2num.get(card[0],int(card[:-1])),card[-1]))
+    return cards
     
     
 def data2board(data):
@@ -137,14 +150,17 @@ def data2board(data):
         if pl.is_me:
             pl.hand=card_correct(player["cards"])
             pl.allIn=data["allowed"]["allIn"]
-            pl.maxTo=data["maxTo"]
-            pl.minTo=data["minTo"]
-            pl.call=data["call"]
-            pl.can_check=data["check"]
-            pl.can_call=data["call"]
-            pl.can_fold=data["fold"]
+            pl.maxTo=data["allowed"]["betRaise"]["maxTo"]
+            pl.minTo=data["allowed"]["betRaise"]["minTo"]
+            pl.call=data["allowed"]["call"]
+            pl.can_check=data["allowed"]["check"]
+            pl.can_call=data["allowed"]["call"]
+            pl.can_fold=data["allowed"]["fold"]
                 
-        board.players.append()
+        board.players.append(pl)
     board.public_cards=card_correct(data["board"])
+    if not board.public_cards:
+        board.public_cards=[]
     board.pot=data["pot"]
+    return(board)
 
