@@ -76,7 +76,7 @@ def classify_5(cards):
 
 def classify_hand(cards7):
     maxcombo=0
-    print(cards7)
+    print("card7",cards7)
     for cards in combinations(cards7,5):
         combo_type,bigcard=classify_5(cards)
         if maxcombo<combo_type:

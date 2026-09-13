@@ -124,10 +124,11 @@ class Board:
         s=f"{self.players},{self.public_cards},{self.pot}"
         return s
 def card_correct(wrong):
+    print("card corection",wrong)
     cards=[]
     for card in wrong:
-        suit2num={"J":11,"Q":12,"K":13,"A":1}
-        cards.append((suit2num.get(card[0],int(card[:-1])),card[-1]))
+        suit2num={"T":10,"J":11,"Q":12,"K":13,"A":1}
+        cards.append((int(suit2num.get(card[0],card[0])),card[-1]))
     return cards
     
     
@@ -147,7 +148,7 @@ def data2board(data):
                   is_Turn=player["isTurn"],
                   bet=player["bet"],
                   )
-        if pl.is_me:
+        if pl.is_me and pl.is_Turn:
             pl.hand=card_correct(player["cards"])
             pl.allIn=data["allowed"]["allIn"]
             pl.maxTo=data["allowed"]["betRaise"]["maxTo"]

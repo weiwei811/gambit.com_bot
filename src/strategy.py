@@ -12,7 +12,7 @@ def sim_game(board):
     # fill
     fill_board(clone)
     # win/lose
-    print("public_cards",clone.public_cards)
+    # print("public_cards",clone.public_cards)
     winner=clone.winner()
     return winner.is_me
 
@@ -23,7 +23,7 @@ def sim_runs(board,n):
         result=sim_game(board)
         if result:
             win+=1
-        print(result)
+        # print(result)
     winrate=win/n
 
     return winrate

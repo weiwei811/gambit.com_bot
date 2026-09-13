@@ -134,28 +134,3 @@ def get_game_data(driver):
                 : []
         };
     """)
-def get_board_state(driver):
-    board=Board()
-    elements = driver.find_elements(By.CSS_SELECTOR, "[class='css-g5y9jx r-1awozwy r-u8s1d r-wc24c3 r-12vffkv']")
-    for element in elements:
-        player=Player()
-        try:
-            balance=element.find_element(By.CSS_SELECTOR,"[class='css-146c3p1 r-jwli3a r-1qe02qc r-14yzgew r-1mnahxq r-iqz8a4 r-n6v787']")
-            player.balance=int(balance.text)
-        except NoSuchElementException:
-            balance=element.find_element(By.CSS_SELECTOR,"[class='css-146c3p1 r-1qe02qc r-14yzgew r-1mnahxq r-iqz8a4 r-n6v787 r-cosyor']")
-            player.balance=int(balance.text)
-            player.is_fold=True
-
-        name=element.find_element(By.CSS_SELECTOR,"[class='css-146c3p1 r-1udh08x r-1udbk01 r-3s2u2q r-1iln25a r-1kihuf0 r-116b78n r-1ldl6ut r-q4m81j r-1enofrn r-1f529hi r-15zivkp r-kc8jnq r-1jizoa0']")
-        player.name=name.text
-        player.bet=player.init_balance-player.balance
-        style=element.get_attribute("style").split("; ")
-        styles={}
-        for s  in style:
-            key,val=s.split(": ")
-            styles[key]=val
-        player.pos=[float(styles["top"][:-2]),float(styles["left"][:-2])]
-        print(player)
-        board.players.append(element)
-    pot=element.find

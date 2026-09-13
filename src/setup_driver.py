@@ -1,14 +1,23 @@
 from selenium import webdriver
 import os
 from time import sleep
+import subprocess
+
 def init_driver():
     options= webdriver.ChromeOptions()
     options.debugger_address="127.0.0.1:9222"
     print("connecting")
+
     try:
-        driver = webdriver.Chrome(options=options)
+        output=subprocess.check_output("curl -sS http://localhost:9222/json",shell=True)
+        has_chrome=True
     except:
-        os.system('"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --remote-debugging-port=9222 --user-data-dir="$HOME/chrome-selenium"')
+        has_chrome=False
+    # print("output",str(output))
+    if has_chrome:
+        driver = webdriver.Chrome(options=options)
+    else:
+        os.system('"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --remote-debugging-port=9222 --user-data-dir="$HOME/chrome-selenium" &') 
         sleep(2)
         driver = webdriver.Chrome(options=options)
     print("created")

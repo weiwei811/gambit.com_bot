@@ -8,18 +8,18 @@ from src.play import decision,exec_deci
 from src.classify_hand import classify_5
 
 
-driver=init_driver()
-# reset(driver)
-# login(driver)
-# enter_game(driver,"bot_game")
-data=get_game_data(driver)
-board=data2board(data)
-# print(decision(board))
-# print(data)
-
-# print(classify_5(((12, 's'), (10, 's'), (1, 's'), (13, 's'), (11, 's'))))
-
-# print(json.dumps(get_game_data(driver),indent=3))
-
-exec_deci(driver,board,"fold or check")
+# driver=init_driver()
+# # reset(driver)
+# # login(driver)
+# # enter_game(driver,"bot_game")
+# data=get_game_data(driver)
 # board=data2board(data)
+# # print(decision(board))
+# # print(data)
+
+# # print(classify_5(((12, 's'), (10, 's'), (1, 's'), (13, 's'), (11, 's'))))
+
+# # print(json.dumps(get_game_data(driver),indent=3))
+
+# exec_deci(driver,board,"call")
+# # board=data2board(data)
