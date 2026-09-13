@@ -6,7 +6,12 @@ from src.strategy import sim_runs
 import json
 from src.play import decision,exec_deci
 from src.classify_hand import classify_5
+from src.dataclass import Board, Player
+from src.analysis import analyze
+import random
 
+random.seed(33)
+analyze(5000)
 
 # driver=init_driver()
 # # reset(driver)

@@ -34,6 +34,7 @@ class Board:
     public_cards: list = field(default_factory=list)
     pot: int = 0
 
+
     def get_me(self):
         for player in self.players:
             if player.is_me:
@@ -62,52 +63,45 @@ class Board:
         if not remaining:
             return None
 
-        return choice(list(remaining))
+        return choice(sorted(remaining))
     def remain_player_count(self):
         alive=0
         for player in self.players:
             if not player.is_fold:
                 alive+=1
         return alive
-    def winner(self):
-        # 每個仍參與牌局的玩家必須有兩張牌
-        for player in self.players:
-            if player.is_fold:
-                continue
+    def get_winners(self):
+        # 檢查未蓋牌玩家的手牌張數
+        active_players = [p for p in self.players if not p.is_fold]
+        if not active_players:
+            return []
 
-            if len(player.hand) < 2:
-                return None
+        # 僅剩一人未蓋牌時直接獲勝（不需等待公共牌開滿）
+        if len(active_players) == 1:
+            return active_players
 
-        # 必須有五張公共牌
+        # 攤牌階段必須有五張公共牌
         if len(self.public_cards) < 5:
             return None
 
-        winner = None
-        winner_hand = None
+        for player in active_players:
+            if len(player.hand) < 2:
+                return None
 
-        for player in self.players:
-            if player.is_fold:
-                continue
+        # 計算每位玩家的最佳 5 張牌評分元組
+        # 假設 classify_hand 回傳的是依序排列的比大小元組，如 (牌型分, 主牌點數, 踢腳1, ...)
+        player_scores = []
+        for player in active_players:
+            best_combo = classify_hand(player.hand + self.public_cards)
+            player_scores.append((player, best_combo))
 
-            combo = classify_hand(
-                player.hand + self.public_cards
-            )
+        # 找出最高評分
+        max_score = max(score for _, score in player_scores)
 
-            if winner_hand is None:
-                winner = player
-                winner_hand = combo
-                continue
+        # 篩選所有達到最高分的玩家（支援平手 split pot）
+        winners = [player for player, score in player_scores if score == max_score]
 
-            if combo[0] > winner_hand[0]:
-                winner = player
-                winner_hand = combo
-
-            elif combo[0] == winner_hand[0]:
-                if combo[1] > winner_hand[1]:
-                    winner = player
-                    winner_hand = combo
-
-        return winner
+        return winners
     
     def get_dealer(game): ## TODO
         players = game["players"]

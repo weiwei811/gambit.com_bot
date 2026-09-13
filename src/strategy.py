@@ -13,8 +13,11 @@ def sim_game(board):
     fill_board(clone)
     # win/lose
     # print("public_cards",clone.public_cards)
-    winner=clone.winner()
-    return winner.is_me
+    winners=clone.get_winners()
+    for winner in winners:
+        if winner.is_me:    
+            return True
+    return False
 
 def sim_runs(board,n):
     win=0
