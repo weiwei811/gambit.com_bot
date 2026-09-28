@@ -1,14 +1,9 @@
-from src.dataclass import Board, Player
-from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.common.by import By
-
-
 def get_board(driver):
     """
-    Retrieves the most recent game snapshot captured by the network interceptor.
+    Retrieves the most recent game snapshot captured by the network interceptor (legacy).
     """
-    board_state = driver.execute_script("return window.__GAMBIT_BOARD_STATE || null;")
-    return board_state
+    return driver.execute_script("return window.__GAMBIT_BOARD_STATE || null;")
+
 
 
 def get_game_data(driver):

@@ -1,0 +1,951 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+src/
+  __init__.py
+  analysis.py
+  classify_hand.py
+  dataclass.py
+  enter.py
+  get_data.py
+  play.py
+  setup_driver.py
+  strategy.py
+.gitignore
+main.py
+maximize.py
+test.py
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="src/__init__.py">
+
+</file>
+
+<file path="src/analysis.py">
+from src.dataclass import Board,Player
+from src.strategy import sim_runs
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+
+def create_mock_board():
+    b=Board()
+    for i in range(6):
+        player=Player()
+        b.players.append(player)
+
+    b.players[0].is_me=True
+    b.players[0].hand.append(b.deal())
+    b.players[0].hand.append(b.deal())
+    
+    return b
+def analyze(n):
+    winrates=[]
+
+    for _ in tqdm(range(n)):
+        b=create_mock_board()
+        winrate=sim_runs(b,400)
+        if winrate>0.45:
+            print(b.players[0].hand)
+        winrates.append(winrate)
+
+    fig, ax = plt.subplots()
+
+    ax.hist(winrates, bins=50, linewidth=0.5, edgecolor="white")
+
+
+    plt.show()
+</file>
+
+<file path="maximize.py">
+def maximize(board,last_move="")
+    if len(board.public_cards)==5 or last_move=="fold":
+        return expectation(board,last_move)  
+    all_cards=[a+]
+    maxExp=-float("inf")
+    maxMove=""
+    available_moves=["continue","fold"]
+    public_cards=board.public_cards
+    remainingcard=all_cards-my_cards-public_cards # TODO
+
+    for move in available_moves:
+        move_exp=0
+        for card in remaining_card:
+            # TODO prepare next board(add tested card)
+            next_board=Board()
+            # END TODO
+            eval,_=maximize(next_board,last_move=move)
+            move_exp+=1/len(remaining_card)*eval
+            
+        if move_exp>maxExp:
+            maxExp=move_exp
+            maxMove=move
+
+    return maxEval,move
+
+def expectation(board,last_move): # TODO
+    if last_move=="fold":
+        return  # TODO should be positive
+    all_cards=board.myplayer.cards+board.public_cards
+    best=best_combine(all_cards)
+    score={"house":50,"full_house":70,"pair":20} #TODO
+    return score[best]
+</file>
+
+<file path=".gitignore">
+__pycache__/
+</file>
+
+<file path="src/enter.py">
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.common.by import By
+
+
+def reset(driver):
+    driver.get("https://gambit.com")
+
+
+def wait_until_element(driver, xpath: str, timeout: int = 5):
+    return WebDriverWait(driver, timeout).until(
+        ec.presence_of_element_located((By.XPATH, xpath))
+    )
+
+
+def login(driver):
+    print("Attempting login...")
+    try:
+        driver.get("https://www.gambit.com/login")
+        login_button = wait_until_element(
+            driver,
+            "/html/body/div[1]/div/div/div/div/div[2]/div[2]/div/div/div/div[2]/div/div/div/div/div[2]/div/div[3]/div/div[1]/div/div[2]/div",
+            timeout=5,
+        )
+        login_button.click()
+        print("Login success.")
+    except Exception as e:
+        print(f"Login bypassed or already authenticated: {type(e).__name__}")
+
+
+def enter_game(driver, mode: str = "bot_game"):
+    if mode == "bot_game":
+        print("Entering bot game...")
+        driver.get("https://www.gambit.com/play/bots")
+        print("Entered bot game.")
+</file>
+
+<file path="src/play.py">
+import sys
+from selenium.webdriver.common.keys import Keys
+from src.strategy import sim_runs
+from src.dataclass import Board
+from src.enter import wait_until_element
+
+
+def decision(board: Board) -> str:
+    """
+    Decides the next action based on simulated equity (winrate)
+    relative to table position and active player count.
+    Guarantees a valid action string is returned (never None).
+    """
+    me = board.get_me()
+    if not me:
+        return "fold"
+
+    alive = board.remain_player_count()
+    if alive <= 1:
+        alive = 1
+
+    winrate = sim_runs(board, 100)
+    print(f"Simulated Equity: {winrate:.2%}")
+
+    # 1. Low equity (below fair share): check if free, otherwise fold
+    if winrate <= 1.0 / alive:
+        if me.can_check:
+            return "check"
+        elif me.can_fold:
+            return "fold"
+        return "check"
+
+    # 2. Moderate equity: call if possible, otherwise check
+    elif winrate <= 1.3 / alive:
+        if me.can_call:
+            return "call"
+        elif me.can_check:
+            return "check"
+        elif me.can_fold:
+            return "fold"
+        return "check"
+
+    # 3. High equity: raise if allowed, otherwise call or check
+    else:
+        if me.min_to is not None and me.max_to is not None:
+            raise_amount = (me.min_to + me.max_to) // 2
+            return f"raise_{raise_amount}"
+        elif me.can_call:
+            return "call"
+        elif me.can_check:
+            return "check"
+        elif me.can_fold:
+            return "fold"
+        return "check"
+
+
+def exec_deci(driver, board: Board, action: str):
+    """
+    Executes the given decision in the browser via Selenium.
+    """
+    if not action:
+        return
+
+    if action == "fold":
+        try:
+            fold_button = wait_until_element(driver, "//*[text()='Fold']", timeout=3)
+            fold_button.click()
+        except Exception as e:
+            print(f"Failed to click Fold: {e}")
+
+    elif action == "check":
+        try:
+            check_button = wait_until_element(driver, "//*[text()='Check']", timeout=3)
+            check_button.click()
+        except Exception as e:
+            print(f"Failed to click Check: {e}")
+
+    elif action == "call":
+        try:
+            call_button = wait_until_element(driver, "//*[contains(text(), 'Call')]", timeout=3)
+            call_button.click()
+        except Exception as e:
+            print(f"Failed to click Call: {e}")
+
+    elif action.startswith("raise_"):
+        amount = action.split("_")[1]
+        try:
+            raise_blank = wait_until_element(driver, "//input", timeout=3)
+            select_all_key = Keys.COMMAND if sys.platform == "darwin" else Keys.CONTROL
+            raise_blank.send_keys(select_all_key, "a")
+            raise_blank.send_keys(Keys.BACK_SPACE)
+            raise_blank.send_keys(str(amount))
+
+            try:
+                raise_button = wait_until_element(driver, "//*[contains(text(), 'Raise')]", timeout=2)
+                raise_button.click()
+            except Exception:
+                bet_button = wait_until_element(driver, "//*[contains(text(), 'Bet')]", timeout=2)
+                bet_button.click()
+        except Exception as e:
+            print(f"Failed to execute raise: {e}")
+</file>
+
+<file path="src/setup_driver.py">
+import os
+import socket
+import subprocess
+from time import sleep
+from selenium import webdriver
+
+
+def is_chrome_debug_port_open(host: str = "127.0.0.1", port: int = 9222) -> bool:
+    """Checks if Chrome remote debugging port is open via native socket."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.5)
+        return s.connect_ex((host, port)) == 0
+
+
+def launch_chrome():
+    """Launches Google Chrome with remote debugging enabled."""
+    chrome_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    user_data_dir = os.path.expanduser("~/chrome-selenium")
+    cmd = [
+        chrome_path,
+        "--remote-debugging-port=9222",
+        f"--user-data-dir={user_data_dir}",
+    ]
+    subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def init_driver() -> webdriver.Chrome:
+    """
+    Initializes a Chrome webdriver connected to the remote debugging port.
+    If Chrome is not currently running with debugging, it launches an instance.
+    """
+    options = webdriver.ChromeOptions()
+    options.debugger_address = "127.0.0.1:9222"
+    print("Connecting to Chrome on 127.0.0.1:9222...")
+
+    if not is_chrome_debug_port_open():
+        print("Chrome debugging port not detected, launching Chrome instance...")
+        launch_chrome()
+        # Wait briefly for the browser process and port to be ready
+        for _ in range(10):
+            sleep(0.5)
+            if is_chrome_debug_port_open():
+                break
+
+    driver = webdriver.Chrome(options=options)
+    print("Chrome driver connected successfully.")
+    return driver
+</file>
+
+<file path="src/classify_hand.py">
+from itertools import combinations
+
+# 點數對應：將 1 視為 14 (Ace)
+def get_rank_value(num):
+    return 14 if num == 1 else num
+
+def classify_5(cards):
+    ranks = sorted([get_rank_value(c[0]) for c in cards], reverse=True)
+    suits = [c[1] for c in cards]
+    
+    is_flush = (len(set(suits)) == 1)
+    
+    # 判斷順子（包含一般順子與 A-2-3-4-5 特殊順子）
+    is_straight = False
+    straight_high = 0
+    
+    unique_ranks = sorted(list(set(ranks)), reverse=True)
+    if len(unique_ranks) == 5:
+        # 一般順子：例如 14, 13, 12, 11, 10 或 9, 8, 7, 6, 5
+        if ranks[0] - ranks[4] == 4:
+            is_straight = True
+            straight_high = ranks[0]
+        # Wheel: A-2-3-4-5 (此時 ranks 為 [14, 5, 4, 3, 2]，最大牌為 5)
+        elif ranks == [14, 5, 4, 3, 2]:
+            is_straight = True
+            straight_high = 5
+
+    # 統計牌數頻率
+    # 格式：[(頻率, 點數), ...] 並由多到少、由大到小排序
+    counts = {r: ranks.count(r) for r in set(ranks)}
+    # 優先按張數排序，張數相同按點數由大到小排序
+    sorted_by_freq = sorted(counts.items(), key=lambda x: (x[1], x[0]), reverse=True)
+    freq_pattern = [item[1] for item in sorted_by_freq]
+    freq_ranks = [item[0] for item in sorted_by_freq]
+
+    # 回傳結構: (牌型等級, *比較依據點數)
+    # 9: 同花順 (包含皇家同花順，straight_high=14 即為皇家)
+    if is_flush and is_straight:
+        return (9, straight_high)
+    # 8: 四條 (比四條點數，再比單張 kicker)
+    if freq_pattern == [4, 1]:
+        return (8, freq_ranks[0], freq_ranks[1])
+    # 7: 葫蘆 (比三條點數，再比對子點數)
+    if freq_pattern == [3, 2]:
+        return (7, freq_ranks[0], freq_ranks[1])
+    # 6: 同花 (由大到小比全部 5 張)
+    if is_flush:
+        return (6, *ranks)
+    # 5: 順子 (比順子最大的牌)
+    if is_straight:
+        return (5, straight_high)
+    # 4: 三條 (比三條點數，再比另外兩張 kicker)
+    if freq_pattern == [3, 1, 1]:
+        return (4, freq_ranks[0], freq_ranks[1], freq_ranks[2])
+    # 3: 兩對 (比大對、小對，再比單張 kicker)
+    if freq_pattern == [2, 2, 1]:
+        return (3, freq_ranks[0], freq_ranks[1], freq_ranks[2])
+    # 2: 一對 (比對子點數，再依序比三張 kicker)
+    if freq_pattern == [2, 1, 1, 1]:
+        return (2, freq_ranks[0], freq_ranks[1], freq_ranks[2], freq_ranks[3])
+    # 1: 高牌 (依序比全部 5 張)
+    return (1, *ranks)
+
+def classify_hand(cards7):
+    # 透過 Python tuple 比較特性，直接取 21 種 5 張組合中的最大值
+    best_hand = max(classify_5(combo) for combo in combinations(cards7, 5))
+    return best_hand
+</file>
+
+<file path="src/get_data.py">
+def get_board(driver):
+    """
+    Retrieves the most recent game snapshot captured by the network interceptor (legacy).
+    """
+    return driver.execute_script("return window.__GAMBIT_BOARD_STATE || null;")
+
+
+
+def get_game_data(driver):
+
+    return driver.execute_script("""
+        if (typeof globalThis.__r !== "function") {
+            return {
+                ready: false,
+                error: "__r is unavailable"
+            };
+        }
+
+        function findModule(predicate, knownIds) {
+            for (const id of knownIds) {
+                try {
+                    const m = globalThis.__r(id);
+                    if (m && predicate(m)) return m;
+                } catch (_) { /* unknown module */ }
+            }
+            for (let id = 300; id <= 8000; id++) {
+                try {
+                    const m = globalThis.__r(id);
+                    if (m && predicate(m)) return m;
+                } catch (_) { /* unknown module */ }
+            }
+            return null;
+        }
+
+        function looksLikeStore(s) {
+            return s && typeof s.getState === "function";
+        }
+
+        const sessionManager = findModule(
+            (m) =>
+                typeof m.getSession === "function" &&
+                typeof m.useSessionRegistry === "function" &&
+                typeof m.getOrCreateSession === "function",
+            [2033]
+        );
+
+        const gameStoreModule = findModule(
+            (m) => looksLikeStore(m.defaultGameStore) || looksLikeStore(m.useGameStore),
+            [1570]
+        );
+
+        let store = null;
+        let sessionKey = null;
+        let registryKeys = [];
+
+        if (sessionManager) {
+            const registry = sessionManager.useSessionRegistry;
+            const sessions = registry.getState().sessions || {};
+            registryKeys = Object.keys(sessions);
+
+            let bestScore = -1;
+            for (const key of registryKeys) {
+                const s = sessions[key];
+                if (!s || s.retired) continue;
+
+                let score = 0;
+                if (s.isConnected) score += 100;
+                if (s.status === "active") score += 50;
+                if (s.format === "bots") score += 10;
+                if (s.isSeated) score += 20;
+
+                const session = sessionManager.getSession(key);
+                const hasSnapshot = Boolean(
+                    session &&
+                    session.store &&
+                    session.store.getState &&
+                    session.store.getState().snapshot
+                );
+                if (hasSnapshot) score += 1000;
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    sessionKey = key;
+                }
+            }
+
+            if (sessionKey) {
+                const session = sessionManager.getSession(sessionKey);
+                store = session && session.store;
+            }
+        }
+
+        if (!looksLikeStore(store) && gameStoreModule) {
+            store = gameStoreModule.defaultGameStore || gameStoreModule.useGameStore;
+        }
+
+        if (!looksLikeStore(store)) {
+            return {
+                ready: false,
+                error: "active game store unavailable",
+                sessionKey,
+                registryKeys
+            };
+        }
+
+        const state = store.getState();
+        const snapshot = state.snapshot;
+
+        return {
+            ready: Boolean(
+                snapshot &&
+                Array.isArray(snapshot.seats)
+            ),
+
+            sessionKey: sessionKey ?? null,
+            activeConnectionId: state.activeConnectionId ?? null,
+            isConnected: state.isConnected ?? false,
+            handId: state.handId ?? snapshot?.handId ?? null,
+
+            players: snapshot?.seats ?? state.seats ?? [],
+            board: snapshot?.board ?? state.board ?? [],
+            pot: snapshot?.pot ?? state.pot ?? 0,
+            street: snapshot?.street ?? state.currentStreet ?? null,
+            heroSeat: snapshot?.heroSeat ?? state.heroSeat ?? null,
+            allowed: snapshot?.allowed ?? state.allowed ?? null,
+
+            snapshotKeys: snapshot
+                ? Object.keys(snapshot)
+                : []
+        };
+    """)
+</file>
+
+<file path="src/strategy.py">
+import random
+from src.classify_hand import classify_hand
+
+FULL_DECK = [(num, suit) for num in range(1, 14) for suit in ["s", "h", "c", "d"]]
+
+
+def fast_monte_carlo(hero_hand: list, public_cards: list, opp_hands: list, n: int = 100) -> float:
+    """
+    High-performance Monte Carlo simulation for poker hand equity.
+    Avoids deepcopy and UI allocations by working directly with card tuples.
+    Correctly handles ties (split pots) by awarding fractional equity.
+    """
+    known = set(hero_hand + public_cards)
+    for h in opp_hands:
+        known.update(h)
+
+    deck = [c for c in FULL_DECK if c not in known]
+    cards_for_board = 5 - len(public_cards)
+    opps_needing_cards = [2 - len(h) for h in opp_hands]
+    total_needed = cards_for_board + sum(opps_needing_cards)
+
+    if total_needed > len(deck):
+        return 0.0
+
+    wins = 0.0
+    for _ in range(n):
+        sampled = random.sample(deck, total_needed)
+        curr_board = public_cards + sampled[:cards_for_board]
+        hero_score = classify_hand(hero_hand + curr_board)
+
+        idx = cards_for_board
+        hero_won = True
+        split_count = 1
+
+        for i, h in enumerate(opp_hands):
+            need = opps_needing_cards[i]
+            opp_full_hand = h + sampled[idx:idx + need]
+            idx += need
+            opp_score = classify_hand(opp_full_hand + curr_board)
+
+            if opp_score > hero_score:
+                hero_won = False
+                break
+            elif opp_score == hero_score:
+                split_count += 1
+
+        if hero_won:
+            wins += 1.0 / split_count
+
+    return wins / n
+
+
+def sim_runs(board, n: int = 100) -> float:
+    """Simulates n showdowns for the given board state and returns hero's equity."""
+    hero = board.get_me()
+    if not hero or len(hero.hand) < 2:
+        return 0.0
+
+    active_opponents = [p for p in board.players if not p.is_me and not p.is_fold]
+    if not active_opponents:
+        return 1.0
+
+    return fast_monte_carlo(
+        hero_hand=hero.hand,
+        public_cards=board.public_cards,
+        opp_hands=[p.hand for p in active_opponents],
+        n=n,
+    )
+
+
+def sim_game(board) -> bool:
+    """Simulates a single showdown and returns whether hero won or tied."""
+    return sim_runs(board, n=1) > 0.0
+
+
+def fill_board(board):
+    """Helper to populate missing cards for offline mock boards."""
+    for player in board.players:
+        while len(player.hand) < 2 and not player.is_fold:
+            card = board.deal()
+            if not card:
+                break
+            player.hand.append(card)
+    while len(board.public_cards) < 5:
+        card = board.deal()
+        if not card:
+            break
+        board.public_cards.append(card)
+</file>
+
+<file path="main.py">
+import json
+from time import sleep
+from src.setup_driver import init_driver
+from src.enter import reset, login, enter_game
+from src.get_data import get_game_data
+from src.dataclass import data2board
+from src.play import decision, exec_deci
+
+
+def main():
+    driver = init_driver()
+    reset(driver)
+    login(driver)
+    enter_game(driver, "bot_game")
+
+    try:
+        while True:
+            data = get_game_data(driver)
+            if not data or not data.get("ready") or not data.get("players"):
+                sleep(1)
+                continue
+
+            board = data2board(data)
+            me = board.get_me()
+            if me and me.is_turn:
+                deci = decision(board)
+                print(f"Action chosen: {deci}")
+                exec_deci(driver, board, deci)
+
+            sleep(1)
+    except KeyboardInterrupt:
+        print("\nBot stopped by user.")
+
+
+if __name__ == "__main__":
+    main()
+</file>
+
+<file path="src/dataclass.py">
+from dataclasses import dataclass, field
+from typing import Optional
+from random import choice
+from src.classify_hand import classify_hand
+
+RANK_MAP = {"T": 10, "J": 11, "Q": 12, "K": 13, "A": 1}
+
+
+@dataclass
+class Player:
+    name: str = ""
+    stack: int = 0
+    seat: int = 0
+    is_me: bool = False
+    is_dealer: bool = False
+    is_sb: bool = False
+    is_bb: bool = False
+    is_bot: bool = False
+    rating: int = 0
+    is_fold: bool = False
+    is_turn: bool = False
+    bet: int = 0
+    hand: list = field(default_factory=list)
+    all_in: Optional[int] = None
+    max_to: Optional[int] = None
+    min_to: Optional[int] = None
+    call_amount: Optional[int] = None
+    can_check: Optional[bool] = None
+    can_call: Optional[bool] = None
+    can_fold: Optional[bool] = None
+
+    # Backwards-compatible properties
+    @property
+    def is_Turn(self) -> bool:
+        return self.is_turn
+
+    @is_Turn.setter
+    def is_Turn(self, value: bool):
+        self.is_turn = value
+
+    @property
+    def is_Dealer(self) -> bool:
+        return self.is_dealer
+
+    @is_Dealer.setter
+    def is_Dealer(self, value: bool):
+        self.is_dealer = value
+
+    @property
+    def is_SB(self) -> bool:
+        return self.is_sb
+
+    @is_SB.setter
+    def is_SB(self, value: bool):
+        self.is_sb = value
+
+    @property
+    def is_BB(self) -> bool:
+        return self.is_bb
+
+    @is_BB.setter
+    def is_BB(self, value: bool):
+        self.is_bb = value
+
+    @property
+    def is_Bot(self) -> bool:
+        return self.is_bot
+
+    @is_Bot.setter
+    def is_Bot(self, value: bool):
+        self.is_bot = value
+
+    @property
+    def maxTo(self) -> Optional[int]:
+        return self.max_to
+
+    @maxTo.setter
+    def maxTo(self, value: Optional[int]):
+        self.max_to = value
+
+    @property
+    def minTo(self) -> Optional[int]:
+        return self.min_to
+
+    @minTo.setter
+    def minTo(self, value: Optional[int]):
+        self.min_to = value
+
+    @property
+    def allIn(self) -> Optional[int]:
+        return self.all_in
+
+    @allIn.setter
+    def allIn(self, value: Optional[int]):
+        self.all_in = value
+
+    @property
+    def call(self) -> Optional[int]:
+        return self.call_amount
+
+    @call.setter
+    def call(self, value: Optional[int]):
+        self.call_amount = value
+
+    def __repr__(self) -> str:
+        return f"Player(name='{self.name}', stack={self.stack}, seat={self.seat}, hand={self.hand})"
+
+
+@dataclass
+class Board:
+    players: list[Player] = field(default_factory=list)
+    public_cards: list = field(default_factory=list)
+    pot: int = 0
+
+    def get_me(self) -> Optional[Player]:
+        for player in self.players:
+            if player.is_me:
+                return player
+        return None
+
+    def get_dealer(self) -> Optional[Player]:
+        for player in self.players:
+            if player.is_dealer:
+                return player
+        return None
+
+    def remain(self) -> set:
+        remaining = {
+            (num, suit)
+            for num in range(1, 14)
+            for suit in ["s", "h", "c", "d"]
+        }
+
+        for player in self.players:
+            for card in player.hand:
+                remaining.discard(card)
+
+        for card in self.public_cards:
+            remaining.discard(card)
+
+        return remaining
+
+    def deal(self):
+        remaining = self.remain()
+        if not remaining:
+            return None
+        return choice(list(remaining))
+
+    def remain_player_count(self) -> int:
+        return sum(1 for player in self.players if not player.is_fold)
+
+    def get_winners(self):
+        active_players = [p for p in self.players if not p.is_fold]
+        if not active_players:
+            return []
+
+        # 僅剩一人未蓋牌時直接獲勝
+        if len(active_players) == 1:
+            return active_players
+
+        # 攤牌階段必須有五張公共牌
+        if len(self.public_cards) < 5:
+            return None
+
+        for player in active_players:
+            if len(player.hand) < 2:
+                return None
+
+        player_scores = []
+        for player in active_players:
+            best_combo = classify_hand(player.hand + self.public_cards)
+            player_scores.append((player, best_combo))
+
+        max_score = max(score for _, score in player_scores)
+        winners = [player for player, score in player_scores if score == max_score]
+        return winners
+
+    def __repr__(self) -> str:
+        return f"Board(players={len(self.players)}, public_cards={self.public_cards}, pot={self.pot})"
+
+
+def card_correct(raw_cards) -> list:
+    """
+    Normalizes cards from string representations (e.g. 'Ts', '10s', 'Ah') or tuples
+    into (rank_int, suit_str) where Ace is 1 and 10 is 10.
+    """
+    if not raw_cards:
+        return []
+
+    cards = []
+    for card in raw_cards:
+        if isinstance(card, (tuple, list)):
+            cards.append(tuple(card))
+            continue
+        if not isinstance(card, str) or len(card) < 2:
+            continue
+        rank_str = card[:-1]
+        suit = card[-1].lower()
+        rank = int(RANK_MAP.get(rank_str.upper(), rank_str))
+        cards.append((rank, suit))
+    return cards
+
+
+def data2board(data: dict) -> Board:
+    board = Board()
+    if not data or not isinstance(data, dict):
+        return board
+
+    hero_seat = data.get("heroSeat")
+    allowed = data.get("allowed") or {}
+
+    for player in data.get("players", []):
+        seat = player.get("seat", 0)
+        # Use heroSeat if available, fallback to checking if cards are present
+        if hero_seat is not None:
+            is_me = (seat == hero_seat)
+        else:
+            is_me = (player.get("cards") is not None)
+
+        pl = Player(
+            name=player.get("name", ""),
+            stack=player.get("stack", 0),
+            seat=seat,
+            is_me=is_me,
+            is_dealer=bool(player.get("isDealer")),
+            is_sb=bool(player.get("isSB")),
+            is_bb=bool(player.get("isBB")),
+            is_bot=bool(player.get("isBot")),
+            rating=player.get("rating", 0),
+            is_fold=(player.get("status") == "folded"),
+            is_turn=bool(player.get("isTurn")),
+            bet=player.get("bet", 0),
+        )
+
+        # Populate hand whenever cards are available for the player (especially hero)
+        if player.get("cards"):
+            pl.hand = card_correct(player["cards"])
+
+        # Populate allowed action metadata for hero on hero's turn
+        if pl.is_me and pl.is_turn and allowed:
+            pl.all_in = allowed.get("allIn")
+            bet_raise = allowed.get("betRaise") or {}
+            pl.max_to = bet_raise.get("maxTo")
+            pl.min_to = bet_raise.get("minTo")
+            pl.call_amount = allowed.get("call")
+            pl.can_check = bool(allowed.get("check"))
+            pl.can_call = bool(allowed.get("call") is not None and allowed.get("call") is not False)
+            pl.can_fold = bool(allowed.get("fold"))
+
+        board.players.append(pl)
+
+    board.public_cards = card_correct(data.get("board"))
+    board.pot = data.get("pot", 0)
+    return board
+</file>
+
+<file path="test.py">
+import json
+import random
+from src.setup_driver import init_driver
+from src.enter import reset, login, enter_game
+from src.get_data import get_game_data
+from src.dataclass import Board, Player, data2board
+from src.strategy import sim_runs
+from src.play import decision, exec_deci
+from src.classify_hand import classify_5
+from src.analysis import analyze
+
+if __name__ == "__main__":
+    random.seed(33)
+    # Quick sanity test of analysis
+    analyze(50)
+
+    # Browser test scaffold (commented out by default):
+    # driver = init_driver()
+    # reset(driver)
+    # login(driver)
+    # enter_game(driver, "bot_game")
+    # data = get_game_data(driver)
+    # board = data2board(data)
+    # print("Parsed board:", board)
+    # print("Decision:", decision(board))
+</file>
+
+</files>

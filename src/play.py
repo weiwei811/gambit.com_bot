@@ -1,60 +1,88 @@
+import sys
 from selenium.webdriver.common.keys import Keys
 from src.strategy import sim_runs
 from src.dataclass import Board
 from src.enter import wait_until_element
 
 
+def decision(board: Board) -> str:
+    me = board.get_me()
+    if not me:
+        return "fold"
 
-def decision(board:Board):
-    alive=board.remain_player_count()
-    winrate=sim_runs(board,100)
-    print(winrate)
-    me=board.get_me()
-    bet=me.bet
-    pot=board.pot
-    P_win=winrate
-    P_lose=1-P_win
-    ev=P_win*pot-P_lose*bet
-    if winrate<=1/alive:
-        if me.can_check:
-            return "check"
-        elif me.can_fold:
-            return "fold"
-    elif winrate<=1.3/alive:
-        if me.can_call:
-            return "call"
-        else:
-            return "check"
-    else:
-        return "raise_(me.maxTo+me.minTo)//2" #TODO
+    # 取得當前模擬勝率
+    winrate = sim_runs(board, 100)
     
-def exec_deci(driver,board:Board,decision):
+    call_amount = me.call_amount or 0
+    pot_size = board.pot
+    
+    # 如果可以過牌（免費看牌），且勝率不高，優先過牌
+    if call_amount == 0:
+        if winrate > 0.6: # 極大優勢，主動加注
+             if me.min_to is not None:
+                 return f"raise_{me.min_to}"
+        return "check"
 
-    me=board.get_me()
-    if decision=="fold":
-        fold_button=wait_until_element(driver,"//*[text()='Fold']")
-        fold_button.click()
-    elif decision=="check":
-        check_button=wait_until_element(driver,"//*[text()='Check']")
-        check_button.click()
-    elif decision=="call":
-        call_button=wait_until_element(driver,"//*[contains(text(), 'Call:')]")
-        call_button.click()
-    else:
-        raise_blank=wait_until_element(driver,"//input")
-        raise_blank.send_keys(Keys.BACK_SPACE)
-        raise_blank.send_keys(f"{decision.split('_')[1]}")
-        try: #TODO
-            raise_button=wait_until_element(driver,"//*[contains(text(), 'Raise:')]")
-            raise_button.click()
-        except:
-            bet_button=wait_until_element(driver,"//*[contains(text(), 'Bet:')]")
-            bet_button.click()
+    # 計算底池賠率
+    pot_odds = call_amount / (pot_size + call_amount) if (pot_size + call_amount) > 0 else 1.0
 
-
-
-
-
-
+    # 根據 EV 進行決策
+    if winrate > pot_odds * 1.3: # 勝率遠大於賠率，考慮加注
+        if me.min_to is not None and me.max_to is not None:
+            # 避免像目前程式碼只加注中間值，可改為加注底池的特定比例 (如 1/2 pot)
+            raise_amount = min(me.max_to, max(me.min_to, int(pot_size * 0.5)))
+            return f"raise_{raise_amount}"
+        return "call"
+    
+    elif winrate >= pot_odds: # 勝率略大於/等於賠率，跟注
+        return "call"
+        
+    else: # 勝率小於賠率，長期虧損
+        return "fold"
 
 
+def exec_deci(driver, board: Board, action: str):
+    """
+    Executes the given decision in the browser via Selenium.
+    """
+    if not action:
+        return
+
+    if action == "fold":
+        try:
+            fold_button = wait_until_element(driver, "//*[text()='Fold']", timeout=3)
+            fold_button.click()
+        except Exception as e:
+            print(f"Failed to click Fold: {e}")
+
+    elif action == "check":
+        try:
+            check_button = wait_until_element(driver, "//*[text()='Check']", timeout=3)
+            check_button.click()
+        except Exception as e:
+            print(f"Failed to click Check: {e}")
+
+    elif action == "call":
+        try:
+            call_button = wait_until_element(driver, "//*[contains(text(), 'Call')]", timeout=3)
+            call_button.click()
+        except Exception as e:
+            print(f"Failed to click Call: {e}")
+
+    elif action.startswith("raise_"):
+        amount = action.split("_")[1]
+        try:
+            raise_blank = wait_until_element(driver, "//input", timeout=3)
+            select_all_key = Keys.COMMAND if sys.platform == "darwin" else Keys.CONTROL
+            raise_blank.send_keys(select_all_key, "a")
+            raise_blank.send_keys(Keys.BACK_SPACE)
+            raise_blank.send_keys(str(amount))
+
+            try:
+                raise_button = wait_until_element(driver, "//*[contains(text(), 'Raise')]", timeout=2)
+                raise_button.click()
+            except Exception:
+                bet_button = wait_until_element(driver, "//*[contains(text(), 'Bet')]", timeout=2)
+                bet_button.click()
+        except Exception as e:
+            print(f"Failed to execute raise: {e}")
