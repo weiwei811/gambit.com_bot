@@ -111,6 +111,8 @@ class Board:
     players: list[Player] = field(default_factory=list)
     public_cards: list = field(default_factory=list)
     pot: int = 0
+    allowed: dict = field(default_factory=dict)
+    street: str = "preflop"
 
     def get_me(self) -> Optional[Player]:
         for player in self.players:
@@ -251,4 +253,6 @@ def data2board(data: dict) -> Board:
 
     board.public_cards = card_correct(data.get("board"))
     board.pot = data.get("pot", 0)
+    board.allowed = allowed
+    board.street = data.get("street", "preflop")
     return board

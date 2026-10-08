@@ -1,0 +1,339 @@
+{
+  "strategies": [
+    {
+      "strategy": "trained",
+      "chips_per_hand": 18.031666666666666,
+      "bb_per_100": 901.5833333333333,
+      "95pct_ci_chips": [
+        13.930033946014564,
+        22.13329938731877
+      ],
+      "positive_payoff_fraction": 0.1736111111111111,
+      "action_counts": [
+        2371,
+        1251,
+        343,
+        2025,
+        189
+      ],
+      "street_action_counts": [
+        [
+          2353,
+          557,
+          75,
+          1318,
+          11
+        ],
+        [
+          18,
+          267,
+          41,
+          450,
+          52
+        ],
+        [
+          0,
+          212,
+          45,
+          257,
+          58
+        ],
+        [
+          0,
+          215,
+          182,
+          0,
+          68
+        ]
+      ]
+    },
+    {
+      "strategy": "monte_carlo_original",
+      "chips_per_hand": 4.804166666666666,
+      "bb_per_100": 240.20833333333331,
+      "95pct_ci_chips": [
+        2.7125558837587236,
+        6.895777449574609
+      ],
+      "positive_payoff_fraction": 0.056666666666666664,
+      "action_counts": [
+        3203,
+        1205,
+        740,
+        0,
+        25
+      ],
+      "street_action_counts": [
+        [
+          3063,
+          405,
+          342,
+          0,
+          4
+        ],
+        [
+          105,
+          395,
+          157,
+          0,
+          16
+        ],
+        [
+          28,
+          229,
+          121,
+          0,
+          5
+        ],
+        [
+          7,
+          176,
+          120,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "strategy": "monte_carlo_tight",
+      "chips_per_hand": 4.635833333333333,
+      "bb_per_100": 231.79166666666666,
+      "95pct_ci_chips": [
+        2.8609453535063603,
+        6.410721313160306
+      ],
+      "positive_payoff_fraction": 0.029166666666666667,
+      "action_counts": [
+        3395,
+        1023,
+        210,
+        0,
+        20
+      ],
+      "street_action_counts": [
+        [
+          3277,
+          464,
+          16,
+          0,
+          3
+        ],
+        [
+          77,
+          285,
+          85,
+          0,
+          8
+        ],
+        [
+          28,
+          159,
+          59,
+          0,
+          5
+        ],
+        [
+          13,
+          115,
+          50,
+          0,
+          4
+        ]
+      ]
+    },
+    {
+      "strategy": "monte_carlo_aggressive",
+      "chips_per_hand": 11.409444444444443,
+      "bb_per_100": 570.4722222222222,
+      "95pct_ci_chips": [
+        7.87430783337171,
+        14.944581055517176
+      ],
+      "positive_payoff_fraction": 0.10805555555555556,
+      "action_counts": [
+        2790,
+        1152,
+        0,
+        1499,
+        386
+      ],
+      "street_action_counts": [
+        [
+          2652,
+          748,
+          0,
+          666,
+          99
+        ],
+        [
+          107,
+          225,
+          0,
+          435,
+          103
+        ],
+        [
+          25,
+          108,
+          0,
+          262,
+          72
+        ],
+        [
+          6,
+          71,
+          0,
+          136,
+          112
+        ]
+      ]
+    },
+    {
+      "strategy": "check_call",
+      "chips_per_hand": -20.261944444444445,
+      "bb_per_100": -1013.0972222222223,
+      "95pct_ci_chips": [
+        -25.366956798127642,
+        -15.156932090761249
+      ],
+      "positive_payoff_fraction": 0.4538888888888889,
+      "action_counts": [
+        0,
+        14405,
+        0,
+        0,
+        0
+      ],
+      "street_action_counts": [
+        [
+          0,
+          6889,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          3446,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          2319,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1751,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "strategy": "random",
+      "chips_per_hand": -18.61916666666667,
+      "bb_per_100": -930.9583333333334,
+      "95pct_ci_chips": [
+        -23.264831053680442,
+        -13.973502279652894
+      ],
+      "positive_payoff_fraction": 0.20555555555555555,
+      "action_counts": [
+        1745,
+        1774,
+        1389,
+        1353,
+        1587
+      ],
+      "street_action_counts": [
+        [
+          1104,
+          1117,
+          946,
+          946,
+          1014
+        ],
+        [
+          396,
+          423,
+          272,
+          250,
+          329
+        ],
+        [
+          166,
+          164,
+          114,
+          104,
+          154
+        ],
+        [
+          79,
+          70,
+          57,
+          53,
+          90
+        ]
+      ]
+    }
+  ],
+  "paired_comparisons": [
+    {
+      "trained_minus": "monte_carlo_original",
+      "chips_per_hand": 13.2275,
+      "95pct_ci_chips": [
+        8.49628815670885,
+        17.958711843291148
+      ]
+    },
+    {
+      "trained_minus": "monte_carlo_tight",
+      "chips_per_hand": 13.395833333333334,
+      "95pct_ci_chips": [
+        8.939569725215549,
+        17.85209694145112
+      ]
+    },
+    {
+      "trained_minus": "monte_carlo_aggressive",
+      "chips_per_hand": 6.622222222222223,
+      "95pct_ci_chips": [
+        0.9050656068485683,
+        12.339378837595877
+      ]
+    },
+    {
+      "trained_minus": "check_call",
+      "chips_per_hand": 38.293611111111105,
+      "95pct_ci_chips": [
+        30.45992064432421,
+        46.127301577897995
+      ]
+    },
+    {
+      "trained_minus": "random",
+      "chips_per_hand": 36.65083333333333,
+      "95pct_ci_chips": [
+        29.641261129861864,
+        43.660405536804795
+      ]
+    }
+  ],
+  "completed_deal_blocks": 600,
+  "requested_deal_blocks": 600,
+  "hands": 3600,
+  "complete": true,
+  "elapsed_seconds": 246.428106351,
+  "big_blind": 2,
+  "starting_stack": 200,
+  "rake": 0,
+  "monte_carlo_samples_per_decision": 100,
+  "model_action_selection": "deterministic",
+  "confidence_unit": "six-rotation deal block"
+}

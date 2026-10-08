@@ -1,0 +1,83 @@
+{"completed_blocks": 10, "hands": 60, "elapsed_seconds": 14.4}
+{"completed_blocks": 20, "hands": 120, "elapsed_seconds": 18.3}
+{"completed_blocks": 30, "hands": 180, "elapsed_seconds": 21.9}
+{"completed_blocks": 40, "hands": 240, "elapsed_seconds": 25.7}
+{"completed_blocks": 50, "hands": 300, "elapsed_seconds": 29.8}
+{"completed_blocks": 60, "hands": 360, "elapsed_seconds": 33.9}
+{"completed_blocks": 70, "hands": 420, "elapsed_seconds": 37.7}
+{"completed_blocks": 80, "hands": 480, "elapsed_seconds": 41.5}
+{"completed_blocks": 90, "hands": 540, "elapsed_seconds": 45.9}
+{"completed_blocks": 100, "hands": 600, "elapsed_seconds": 49.6}
+{"completed_blocks": 110, "hands": 660, "elapsed_seconds": 53.1}
+{"completed_blocks": 120, "hands": 720, "elapsed_seconds": 56.8}
+{"completed_blocks": 130, "hands": 780, "elapsed_seconds": 60.3}
+{"completed_blocks": 140, "hands": 840, "elapsed_seconds": 64.3}
+{"completed_blocks": 150, "hands": 900, "elapsed_seconds": 68.5}
+{"completed_blocks": 160, "hands": 960, "elapsed_seconds": 72.1}
+{"completed_blocks": 170, "hands": 1020, "elapsed_seconds": 76.3}
+{"completed_blocks": 180, "hands": 1080, "elapsed_seconds": 79.9}
+{"completed_blocks": 190, "hands": 1140, "elapsed_seconds": 83.4}
+{"completed_blocks": 200, "hands": 1200, "elapsed_seconds": 87.0}
+{"completed_blocks": 210, "hands": 1260, "elapsed_seconds": 90.6}
+{"completed_blocks": 220, "hands": 1320, "elapsed_seconds": 94.6}
+{"completed_blocks": 230, "hands": 1380, "elapsed_seconds": 98.2}
+{"completed_blocks": 240, "hands": 1440, "elapsed_seconds": 102.0}
+{"completed_blocks": 250, "hands": 1500, "elapsed_seconds": 105.6}
+{"completed_blocks": 260, "hands": 1560, "elapsed_seconds": 109.5}
+{"completed_blocks": 270, "hands": 1620, "elapsed_seconds": 113.5}
+{"completed_blocks": 280, "hands": 1680, "elapsed_seconds": 117.9}
+{"completed_blocks": 290, "hands": 1740, "elapsed_seconds": 121.9}
+{"completed_blocks": 300, "hands": 1800, "elapsed_seconds": 125.7}
+{"completed_blocks": 310, "hands": 1860, "elapsed_seconds": 129.7}
+{"completed_blocks": 320, "hands": 1920, "elapsed_seconds": 134.3}
+{"completed_blocks": 330, "hands": 1980, "elapsed_seconds": 138.4}
+{"completed_blocks": 340, "hands": 2040, "elapsed_seconds": 142.2}
+{"completed_blocks": 350, "hands": 2100, "elapsed_seconds": 146.0}
+{"completed_blocks": 360, "hands": 2160, "elapsed_seconds": 150.1}
+{"completed_blocks": 370, "hands": 2220, "elapsed_seconds": 155.0}
+{"completed_blocks": 380, "hands": 2280, "elapsed_seconds": 158.7}
+{"completed_blocks": 390, "hands": 2340, "elapsed_seconds": 162.3}
+{"completed_blocks": 400, "hands": 2400, "elapsed_seconds": 165.9}
+{"completed_blocks": 410, "hands": 2460, "elapsed_seconds": 169.4}
+{"completed_blocks": 420, "hands": 2520, "elapsed_seconds": 173.4}
+{"completed_blocks": 430, "hands": 2580, "elapsed_seconds": 177.1}
+{"completed_blocks": 440, "hands": 2640, "elapsed_seconds": 181.0}
+{"completed_blocks": 450, "hands": 2700, "elapsed_seconds": 184.9}
+{"completed_blocks": 460, "hands": 2760, "elapsed_seconds": 189.1}
+{"completed_blocks": 470, "hands": 2820, "elapsed_seconds": 193.4}
+{"completed_blocks": 480, "hands": 2880, "elapsed_seconds": 197.0}
+{"completed_blocks": 490, "hands": 2940, "elapsed_seconds": 201.0}
+{"completed_blocks": 500, "hands": 3000, "elapsed_seconds": 205.4}
+{"completed_blocks": 510, "hands": 3060, "elapsed_seconds": 209.2}
+{"completed_blocks": 520, "hands": 3120, "elapsed_seconds": 212.7}
+{"completed_blocks": 530, "hands": 3180, "elapsed_seconds": 216.5}
+{"completed_blocks": 540, "hands": 3240, "elapsed_seconds": 220.2}
+{"completed_blocks": 550, "hands": 3300, "elapsed_seconds": 224.3}
+{"completed_blocks": 560, "hands": 3360, "elapsed_seconds": 228.5}
+{"completed_blocks": 570, "hands": 3420, "elapsed_seconds": 232.6}
+{"completed_blocks": 580, "hands": 3480, "elapsed_seconds": 236.3}
+{"completed_blocks": 590, "hands": 3540, "elapsed_seconds": 240.4}
+{"completed_blocks": 600, "hands": 3600, "elapsed_seconds": 243.9}
+# Shared-table Hold'em comparison
+
+3,600 six-player hands, 600 independent deal blocks; six seat rotations per deal. Stacks reset to 100 BB each hand, no rake. All six strategies share every table. Monte Carlo uses 100 samples/decision and sees no opponents' cards.
+
+| Strategy | Chips/hand | BB/100 | 95% CI (chips/hand) | Fold fraction |
+|---|---:|---:|---|---:|
+| trained | +18.03 | +901.6 | [+13.93, +22.13] | 38.4% |
+| monte_carlo_aggressive | +11.41 | +570.5 | [+7.87, +14.94] | 47.9% |
+| monte_carlo_original | +4.80 | +240.2 | [+2.71, +6.90] | 61.9% |
+| monte_carlo_tight | +4.64 | +231.8 | [+2.86, +6.41] | 73.0% |
+| random | -18.62 | -931.0 | [-23.26, -13.97] | 22.2% |
+| check_call | -20.26 | -1013.1 | [-25.37, -15.16] | 0.0% |
+
+Trained model minus each competitor (paired by deal block):
+
+- monte_carlo_original: +13.23 chips/hand; 95% CI [8.49628815670885, 17.958711843291148].
+- monte_carlo_tight: +13.40 chips/hand; 95% CI [8.939569725215549, 17.85209694145112].
+- monte_carlo_aggressive: +6.62 chips/hand; 95% CI [0.9050656068485683, 12.339378837595877].
+- check_call: +38.29 chips/hand; 95% CI [30.45992064432421, 46.127301577897995].
+- random: +36.65 chips/hand; 95% CI [29.641261129861864, 43.660405536804795].
+
+Assessment: The trained model's advantage over the original Monte Carlo policy is supported on this mixed table. The ranked average alone is insufficient when the paired interval overlaps zero. Results measure performance in this lineup, including exploitation of weak seats, rather than isolated heads-up strength. Continuous Monte Carlo raises retain their exact amounts; the model sees their nearest half-pot/pot history category. The tighter/aggressive variants use the same equity estimator with different betting rules. Intervals are approximate and are not adjusted for multiple comparisons.
+
