@@ -33,3 +33,7 @@ def enter_game(driver, mode: str = "bot_game"):
         print("Entering bot game...")
         driver.get("https://www.gambit.com/play/bots")
         print("Entered bot game.")
+    elif mode == "human_game":
+        print("Entering humane game...")
+        driver.get("https://www.gambit.com/play/live")
+        print("Entered human game")

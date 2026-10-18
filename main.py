@@ -12,7 +12,7 @@ def main():
     driver = init_driver()
     reset(driver)
     login(driver)
-    enter_game(driver, "bot_game")
+    enter_game(driver, "human_game")
     game_history = GameHistory()
 
     try:
