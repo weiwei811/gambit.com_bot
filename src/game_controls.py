@@ -11,12 +11,15 @@ from selenium.webdriver.support.ui import WebDriverWait
 FIND_ACTION_CONTROLS = r"""
 const wanted = arguments[0];
 const root = arguments[1] || document;
-const label = /^(Fold|Check|Call|Raise|Bet)(?:\s*:\s*[\d,.]+)?$/;
+// Require an amount for All-in: the bare "All-In" sizing preset is not
+// the final action button and must never be mistaken for submission.
+const label = /^(?:(Fold|Check|Call|Raise|Bet)(?:\s*:\s*[\d,.]+)?|(All[-\u2010\u2011 ]?in)\s*:\s*[\d,.]+)$/i;
 const selector = 'button,[role="button"],[tabindex="0"]';
 const labels = Array.from(root.querySelectorAll('span,div,button'))
     .filter(el => el.children.length === 0 && label.test(el.textContent.trim()));
 const controls = labels.map(el => ({
-    el, action: el.textContent.trim().match(label)[1].toLowerCase(),
+    el, action: el.textContent.trim().match(label)[2] ? 'all_in'
+        : el.textContent.trim().match(label)[1].toLowerCase(),
     control: el.closest(selector),
 })).filter(item => item.control && !item.control.closest('header,nav'));
 const matches = [];

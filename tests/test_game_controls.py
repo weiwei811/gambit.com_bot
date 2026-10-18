@@ -4,6 +4,8 @@ from selenium.common.exceptions import ElementClickInterceptedException, Timeout
 import pytest
 
 from src.game_controls import FIND_ACTION_CONTROLS, HIT_TEST, click_action
+from src.play import exec_deci
+from src.dataclass import Board
 
 
 def _control():
@@ -47,3 +49,14 @@ def test_never_force_clicks_a_covered_control():
     with pytest.raises(TimeoutException):
         click_action(driver, "call", timeout=0)
     covered.click.assert_not_called()
+
+
+def test_raise_accepts_final_all_in_action_label(monkeypatch):
+    amount_input = Mock()
+    monkeypatch.setattr("src.play.wait_until_element", lambda *args, **kwargs: amount_input)
+    click = Mock()
+    monkeypatch.setattr("src.play.click_action", click)
+    driver = Mock()
+    exec_deci(driver, Board(), "raise_16")
+    click.assert_called_once_with(driver, "raise", "bet", "all_in")
+    amount_input.send_keys.assert_called_with("16")

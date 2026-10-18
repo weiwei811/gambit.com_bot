@@ -39,6 +39,6 @@ def exec_deci(driver, board: Board, action: str):
             raise_blank.send_keys(Keys.BACK_SPACE)
             raise_blank.send_keys(str(amount))
 
-            click_action(driver, "raise", "bet")
+            click_action(driver, "raise", "bet", "all_in")
         except Exception as e:
-            print(f"Failed to execute raise: {e}")
+            print(f"Failed to execute raise ({type(e).__name__}): {e}")
