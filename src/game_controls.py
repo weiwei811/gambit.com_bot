@@ -1,7 +1,11 @@
 """Locate visible betting controls rather than unrelated page text."""
+import re
+import sys
 from selenium.common.exceptions import (
-    ElementClickInterceptedException, StaleElementReferenceException,
+    ElementClickInterceptedException, ElementNotInteractableException,
+    StaleElementReferenceException,
 )
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 
 
@@ -47,19 +51,79 @@ const hit = document.elementFromPoint(r.left + r.width/2, r.top + r.height/2);
 return Boolean(hit && (hit === el || el.contains(hit)));
 """
 
+FIND_RAISE_INPUTS = """
+const control = arguments[0];
+for (let group = control.parentElement, depth = 0; group && depth < 7;
+     group = group.parentElement, depth++) {
+    if (['BODY','HTML','MAIN'].includes(group.tagName)) break;
+    const inputs = Array.from(group.querySelectorAll('input'))
+        .filter(el => !el.disabled && !el.readOnly &&
+            ['text','number','tel'].includes(el.type));
+    if (inputs.length) return inputs;
+}
+return [];
+"""
 
-def click_action(driver, *actions, timeout=3):
+
+def _raise_inputs(browser):
+    controls = browser.execute_script(FIND_ACTION_CONTROLS, ["raise", "bet", "all_in"])
+    for control in controls:
+        for field in browser.execute_script(FIND_RAISE_INPUTS, control):
+            if (field.is_displayed() and field.is_enabled() and
+                    browser.execute_script(HIT_TEST, field)):
+                yield field
+
+
+def set_raise_amount(driver, amount, timeout=3):
+    """Type in the betting panel, then confirm the controlled input accepted it."""
+    amount = str(int(amount))
+    platform = str(driver.capabilities.get("platformName", sys.platform)).lower()
+    modifier = Keys.COMMAND if platform in ("mac", "macos", "darwin") else Keys.CONTROL
+
+    def enter(browser):
+        try:
+            for field in _raise_inputs(browser):
+                field.click()
+                # Replace the selection directly: a separate Backspace can
+                # trigger React's minimum-value correction before we type.
+                field.send_keys(modifier, "a")
+                field.send_keys(amount)
+                return True
+        except (StaleElementReferenceException, ElementNotInteractableException,
+                ElementClickInterceptedException):
+            pass
+        return False
+
+    wait = WebDriverWait(driver, timeout, poll_frequency=0.15)
+    wait.until(enter, message="No interactable raise input in the betting panel")
+
+    def accepted(browser):
+        try:
+            return any(str(field.get_property("value")) == amount for field in _raise_inputs(browser))
+        except StaleElementReferenceException:
+            return False
+    wait.until(accepted, message=f"Raise input did not accept {amount}; action was not submitted")
+
+
+def click_action(driver, *actions, timeout=3, expected_amount=None):
     """Retry a normal WebDriver click while overlays/transitions settle."""
     def attempt(browser):
         for control in browser.execute_script(FIND_ACTION_CONTROLS, list(actions)):
             try:
                 if not control.is_displayed() or not control.is_enabled():
                     continue
+                if expected_amount is not None:
+                    label = re.fullmatch(r"(?:Raise|Bet|All[-\u2010\u2011 ]?in)\s*:\s*([\d,.]+)",
+                                         control.text.strip(), re.IGNORECASE)
+                    if not label or float(label[1].replace(",", "")) != float(expected_amount):
+                        continue
                 if not browser.execute_script(HIT_TEST, control):
                     continue
                 control.click()
                 return True
-            except (StaleElementReferenceException, ElementClickInterceptedException):
+            except (StaleElementReferenceException, ElementClickInterceptedException,
+                    ElementNotInteractableException):
                 continue
         return False
-    return WebDriverWait(driver, timeout, poll_frequency=0.15).until(attempt)
+    return WebDriverWait(driver, timeout, poll_frequency=0.15).until(
+        attempt, message=f"No unobscured betting control for {actions}, expected amount {expected_amount}")

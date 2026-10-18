@@ -1,9 +1,6 @@
-import sys
-from selenium.webdriver.common.keys import Keys
 from src.dataclass import Board
-from src.enter import wait_until_element
 from src.ai_decision import decision
-from src.game_controls import click_action
+from src.game_controls import click_action, set_raise_amount
 
 def exec_deci(driver, board: Board, action: str):
     """
@@ -33,12 +30,7 @@ def exec_deci(driver, board: Board, action: str):
     elif action.startswith("raise_"):
         amount = action.split("_")[1]
         try:
-            raise_blank = wait_until_element(driver, "//input", timeout=3)
-            select_all_key = Keys.COMMAND if sys.platform == "darwin" else Keys.CONTROL
-            raise_blank.send_keys(select_all_key, "a")
-            raise_blank.send_keys(Keys.BACK_SPACE)
-            raise_blank.send_keys(str(amount))
-
-            click_action(driver, "raise", "bet", "all_in")
+            set_raise_amount(driver, amount)
+            click_action(driver, "raise", "bet", "all_in", expected_amount=amount)
         except Exception as e:
             print(f"Failed to execute raise ({type(e).__name__}): {e}")
