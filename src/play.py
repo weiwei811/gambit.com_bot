@@ -3,6 +3,7 @@ from selenium.webdriver.common.keys import Keys
 from src.dataclass import Board
 from src.enter import wait_until_element
 from src.ai_decision import decision
+from src.game_controls import click_action
 
 def exec_deci(driver, board: Board, action: str):
     """
@@ -13,22 +14,19 @@ def exec_deci(driver, board: Board, action: str):
 
     if action == "fold":
         try:
-            fold_button = wait_until_element(driver, "//*[text()='Fold']", timeout=3)
-            fold_button.click()
+            click_action(driver, "fold")
         except Exception as e:
             print(f"Failed to click Fold: {e}")
 
     elif action == "check":
         try:
-            check_button = wait_until_element(driver, "//*[text()='Check']", timeout=3)
-            check_button.click()
+            click_action(driver, "check")
         except Exception as e:
             print(f"Failed to click Check: {e}")
 
     elif action == "call":
         try:
-            call_button = wait_until_element(driver, "//*[contains(text(), 'Call')]", timeout=3)
-            call_button.click()
+            click_action(driver, "call")
         except Exception as e:
             print(f"Failed to click Call: {e}")
 
@@ -41,11 +39,6 @@ def exec_deci(driver, board: Board, action: str):
             raise_blank.send_keys(Keys.BACK_SPACE)
             raise_blank.send_keys(str(amount))
 
-            try:
-                raise_button = wait_until_element(driver, "//*[contains(text(), 'Raise')]", timeout=2)
-                raise_button.click()
-            except Exception:
-                bet_button = wait_until_element(driver, "//*[contains(text(), 'Bet')]", timeout=2)
-                bet_button.click()
+            click_action(driver, "raise", "bet")
         except Exception as e:
             print(f"Failed to execute raise: {e}")
