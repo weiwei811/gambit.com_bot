@@ -16,6 +16,10 @@ On macOS, activate with `source .venv/bin/activate`. The requirement markers sel
 
 ## Run
 
+Copy `.env.example` to `.env` in the repository root and set `GAMBIT_USERNAME` and `GAMBIT_PASSWORD` for automatic credential entry. Both are optional when Chrome is already signed in. Set `POKER_AI_MODE=model` or `legacy` in the same file. Shell environment variables override `.env`; never commit the actual `.env` file.
+
+If updating from a version that contained hardcoded credentials, change the exposed password. Removing it from Git history cannot revoke previously downloaded copies.
+
 1. Start Chrome with remote debugging on port `9222` and sign in to Gambit.
 2. Run `python main.py`.
 3. Stop the bot with Ctrl+C.
