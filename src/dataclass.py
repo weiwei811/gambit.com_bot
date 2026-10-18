@@ -209,10 +209,12 @@ def data2board(data: dict) -> Board:
         return board
 
     hero_seat = data.get("heroSeat")
+    if hero_seat is not None:
+        hero_seat = int(hero_seat)
     allowed = data.get("allowed") or {}
 
     for player in data.get("players", []):
-        seat = player.get("seat", 0)
+        seat = int(player.get("seat", 0))
         # Use heroSeat if available, fallback to checking if cards are present
         if hero_seat is not None:
             is_me = (seat == hero_seat)

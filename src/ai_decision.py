@@ -109,16 +109,23 @@ class GameHistory:
 
     def observe(self, data):
         hand_id = data.get("handId")
-        if self.previous is None or (hand_id is not None and hand_id != self.hand_id):
+        players = _seats(data)
+        if len(players) != NUM_PLAYERS:
+            # Let decision() use the legacy policy on unsupported tables.
+            self.previous = None
+            self.history = [[], [], [], []]
+            self.contributions = [0.0] * NUM_PLAYERS
+            return
+        layout_changed = (self.previous is not None and
+                          _seat_ids(players) != _seat_ids(_seats(self.previous)))
+        if self.previous is None or layout_changed or (hand_id is not None and hand_id != self.hand_id):
             self.hand_id = hand_id
             self.previous = data
             self.history = [[], [], [], []]
             self.last_raise_amount = 2.0
             self.contributions = [0.0] * NUM_PLAYERS
-            for index, player in enumerate(_seats(data)):
-                seat = int(player.get("seat", index))
-                if 0 <= seat < NUM_PLAYERS:
-                    self.contributions[seat] = float(player.get("bet") or 0)
+            for index, player in enumerate(players):
+                self.contributions[index] = float(player.get("bet") or 0)
             return
         old = self.previous
         if _street(old) != _street(data):
@@ -128,7 +135,7 @@ class GameHistory:
         if actor_index is not None and len(old_players) == NUM_PLAYERS and len(new_players) == NUM_PLAYERS:
             old_street = _street(old)
             oldp, newp = old_players[actor_index], new_players[actor_index]
-            actor = int(oldp.get("seat", actor_index))
+            actor = actor_index
             old_bet = float(oldp.get("bet") or 0)
             new_bet = float(newp.get("bet") or 0)
             old_status = str(oldp.get("status", "")).lower()
@@ -168,7 +175,14 @@ class GameHistory:
 
 
 def _seats(data):
-    return data.get("players") or data.get("seats") or []
+    # Stable numeric seat order is also the model's clockwise row order.
+    # Keep external seat IDs in snapshots; only model/history rows are dense.
+    players = data.get("players") or data.get("seats") or []
+    return sorted(players, key=lambda p: int(p["seat"]))
+
+
+def _seat_ids(players):
+    return tuple(int(p["seat"]) for p in players)
 
 
 def _street(data):
@@ -196,13 +210,16 @@ def _legal_actions(allowed, player):
 
 
 def _make_observation(board, history, contributions, last_raise_amount=2.0):
-    players = sorted(board.players, key=lambda p: p.seat)
+    players = sorted(board.players, key=lambda p: int(p.seat))
     if len(players) != NUM_PLAYERS:
         raise ValueError(f"The checkpoint requires exactly six seats; received {len(players)}")
     hero = board.get_me()
     if hero is None or len(hero.hand) != 2:
         raise ValueError("Hero hole cards are required for model inference")
-    actor = int(hero.seat)
+    seat_to_index = {int(p.seat): i for i, p in enumerate(players)}
+    if len(seat_to_index) != NUM_PLAYERS:
+        raise ValueError("Each player must have a unique table seat ID")
+    actor = seat_to_index[int(hero.seat)]
     card_info = np.zeros((4, 13, 6), dtype=np.float32)
     for card in hero.hand:
         parsed = _card(card)
@@ -232,8 +249,7 @@ def _make_observation(board, history, contributions, last_raise_amount=2.0):
     action_info[actor, :, -1] = 1
     table = np.zeros((NUM_PLAYERS, 5), dtype=np.float32)
     extras = np.zeros(NUM_PLAYERS, dtype=np.float32)
-    for p in players:
-        seat = int(p.seat)
+    for seat, p in enumerate(players):
         status = "folded" if p.is_fold else "allin" if float(p.stack or 0) <= 0 else "active"
         table[seat] = [contributions[seat] if contributions else p.bet,
                        status != "folded", status == "allin", p.is_dealer, p.is_me]

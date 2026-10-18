@@ -33,3 +33,5 @@ The [2026-10-08 shared-table report](results/shared_table_2026-10-08/report.md) 
 The bundled checkpoint is the verified six-player structured model dated 2026-10-06. It was benchmarked at +18.14 chips per hand against the project’s fixed benchmark pool; that benchmark does not establish optimal play. The policy supports six seats and requires the hero’s two visible cards. If model inference cannot run, the bot falls back to the existing Monte Carlo strategy.
 
 The browser data source is an undocumented client store and may change. The action history is reconstructed from observed snapshots, so transitions missed while the bot is not polling cannot be recovered. Review the printed action and the UI before using it with real stakes.
+
+Table seat IDs (including one-based or sparse IDs) are mapped to six dense model rows in numeric seat order. Snapshot list reordering does not change player identity. Unsupported table sizes use the legacy policy.
